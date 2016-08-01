@@ -2,9 +2,6 @@
 #+TITLE: Nanopore Reads Analysis
 * Data analysis
 ** Ligated STRs
-*** Setup :noexport:
-    #+BEGIN_SRC sh :results silent
-      sshfs forensic.ugent.be:/data /home/christophe/mnt/nanopore/
     #+END_SRC
 
 *** Updated poretools, installed under global python3 :noexport:
@@ -141,72 +138,6 @@
        print(withoutFQcounter, "fast5 files without called fastq sequence")
        outfile.close()
      #+END_SRC
-
-*** Counting primers in reads :noexport:
-**** Philosophical reflections
-     Assuming nanopore accuracy of 0.85%, or sequencing error 0.15%,
-     how muck reads can we hope to extract if we search the primers,
-     allowing up to a specific amount of errors
-     - binom.cdf => cumulative probability
-     - binom.pmf => probabilty for exact number of success
-     #+BEGIN_SRC python :results output
-       from scipy.stats import binom
-       sequencingError = 0.15
-       averagePrimerLength = 20
-       #Cumulative binomial distribution
-       for allowedErrors in range(6):
-	   print("{:.2f} of reads have primers with up to {} errors.".format(
-	       binom.cdf(allowedErrors, averagePrimerLength, sequencingError)**2,
-	       allowedErrors)
-	   )
-     #+END_SRC
-
-     #+RESULTS:
-     : 0.00 of reads have primers with up to 0 errors.
-     : 0.03 of reads have primers with up to 1 errors.
-     : 0.16 of reads have primers with up to 2 errors.
-     : 0.42 of reads have primers with up to 3 errors.
-     : 0.69 of reads have primers with up to 4 errors.
-     : 0.87 of reads have primers with up to 5 errors.
-
-**** Quick and dirty counting primers
-    #+BEGIN_SRC python :results silent :session *nanofore*
-      from itertools import count
-      import matplotlib.pyplot as plt
-      import sys
-      sys.path.append("/home/christophe/repos/myflq/src/")
-      from MyFLq import complement
-
-      fastq = open("/home/christophe/Documents/STR/Nanopore/Results/ligatedSTRs.fastq")
-      c = count(0)
-      reads = [line for line in fastq if next(c)%4 == 1]
-
-      #Plot length histogram
-      plt.hist([len(r) for r in reads],bins=1000)
-      #plt.show()
-
-      allDataOneString = ' '.join(reads)
-
-      #Primers
-      primers = {}
-      for line in open("/home/christophe/repos/nanofore/primersequences"):
-	  if line.startswith('#'): continue
-	  line = line.strip().split(',')
-	  primers[line[0]] = {'for':[line[1],allDataOneString.count(line[1])],
-			      'forc':[complement(line[1]),allDataOneString.count(complement(line[1]))],
-			      'rev':[line[2],allDataOneString.count(line[2])],
-			      'revc':[complement(line[2]),allDataOneString.count(complement(line[2]))],
-	  }
-
-      for p in primers:
-	  print(p,
-		primers[p]['for'][1],
-		primers[p]['forc'][1],
-		primers[p]['rev'][1],
-		primers[p]['revc'][1])
-
-       
-    #+END_SRC
 
 *** Analyzing full reads
 **** Reflections :noexport:
@@ -499,59 +430,6 @@
       calculateOriginalLength(10.3,ligread.loci['D13S317']['locusType'],
 			      ligread.loci['D13S317']['ref_length'],
 			      ligread.loci['D13S317']['ref_number'])
-    #+END_SRC
-
-*** Multiple sequence alignment :noexport:
-    - http://www.ebi.ac.uk/Tools/msa/
-      - http://www.ebi.ac.uk/Tools/msa/mafft/
-    - https://github.com/PacificBiosciences/pbdagcon
-    - Installed Biopython => pip install biopython
-      #+BEGIN_SRC python :results output
-	from Bio import AlignIO
-	from Bio.Align import AlignInfo
-	alignment = AlignIO.read(open('/home/christophe/Downloads/msatest.fasta'),"fasta")
-	summary_align = AlignInfo.SummaryInfo(alignment)
-	consensus = summary_align.gap_consensus()
-	print('Consensus length:',len(str(consensus).replace('-','')))
-	print('Ambiguous bases:',consensus.count('X'))
-      #+END_SRC
-
-      #+RESULTS:
-      : Consensus length: 191
-      : Ambiguous bases: 20
-
-**** Biopython
-     - View subalignment => alignment[:10,20:30]
-
-*** Reference sequence alignment :noexport:
-    Example
-    #+BEGIN_SRC python
-      from Bio import pairwise2
-      from Bio.Seq import Seq
-      from Bio.SeqRecord import SeqRecord
-      from Bio import AlignIO
-      from Bio.Align import AlignInfo
-      from Bio.Alphabet import IUPAC, Gapped
-
-      #Example D3 allel 15
-      reference = 
-"ACTGCAGTCCAATCTGGGTGACAGAGCAAGACCCTGTCTCATAGATAGATAGATAGATAGATAGATAGATAGATAGATAGATAGACAGACAGACAGATAGATACATGCAAGCCTCTGTTGATTTCAT"
-      consensus = 
-"XXXXXAGTCCAATCTGGGTGACAGAGCAAGACCCTGTCTCATAGATAGATAGATAGATAGATAGATAGATAGATAGATAGATAGATAGACAGACAGATAGATACATGCAAGCCTCTGTTGATTTXXX"
-
-      alignments = pairwise2.align.globalms(reference,consensus,2,-1,-1,-1)
-      #Last 4 numbers are: match score, mismatch penalty, gap penalty, gap extension
-
-      print(len(alignments))
-      #Ideally one, if many only look at the best score alignment
-
-      align =AlignIO.MultipleSeqAlignment([],Gapped(IUPAC.ambiguous_dna, "-"))
-      align.append(SeqRecord(Seq(alignments[0][0],IUPAC.ambiguous_dna),id="Reference"))
-      align.append(SeqRecord(Seq(alignments[0][1].replace('X','N'),IUPAC.ambiguous_dna),id="Consensus"))
-      summary_align = AlignInfo.SummaryInfo(align)
-      consensus = summary_align.gap_consensus()
-      print('Mismatches:',consensus.count('X'))
-      print(consensus)
     #+END_SRC
 * Population data :noexport:
 ** popSTR
