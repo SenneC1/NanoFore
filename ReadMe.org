@@ -1,0 +1,560 @@
+#+OPTIONS: toc:nil 
+#+TITLE: Nanopore Reads Analysis
+* Data analysis
+** Ligated STRs
+*** Setup :noexport:
+    #+BEGIN_SRC sh :results silent
+      sshfs forensic.ugent.be:/data /home/christophe/mnt/nanopore/
+    #+END_SRC
+
+*** Updated poretools, installed under global python3 :noexport:
+  - https://github.com/arq5x/poretools
+  - Not used
+
+*** Extracting reads from nanopore data
+**** Checking current fast5 format
+     #+BEGIN_SRC python :results output
+       import h5py
+       #Example f5 file
+       f5 = h5py.File('/run/media/christophe/Elements/ONT Data sets/downloads 121115 AMPLICONS LIGATED/'+
+                      'pass/FW01C250_AMPLICONS_LIGATED_121115A_2348_1_ch71_file70_strand.fast5')
+       #Walk the file structure
+       def printname(name):
+           print(name,'(group)' if type(f5[name]) == h5py._hl.group.Group else '')
+
+       f5.visit(printname)
+     #+END_SRC
+
+     #+RESULTS:
+     #+begin_example
+     Analyses (group)
+     Analyses/Basecall_1D_000 (group)
+     Analyses/Basecall_1D_000/BaseCalled_complement (group)
+     Analyses/Basecall_1D_000/BaseCalled_complement/Events 
+     Analyses/Basecall_1D_000/BaseCalled_complement/Fastq 
+     Analyses/Basecall_1D_000/BaseCalled_complement/Model 
+     Analyses/Basecall_1D_000/BaseCalled_template (group)
+     Analyses/Basecall_1D_000/BaseCalled_template/Events 
+     Analyses/Basecall_1D_000/BaseCalled_template/Fastq 
+     Analyses/Basecall_1D_000/BaseCalled_template/Model 
+     Analyses/Basecall_1D_000/Configuration (group)
+     Analyses/Basecall_1D_000/Configuration/aggregator (group)
+     Analyses/Basecall_1D_000/Configuration/basecall_1d (group)
+     Analyses/Basecall_1D_000/Configuration/basecall_2d (group)
+     Analyses/Basecall_1D_000/Configuration/calibration_strand (group)
+     Analyses/Basecall_1D_000/Configuration/components (group)
+     Analyses/Basecall_1D_000/Configuration/general (group)
+     Analyses/Basecall_1D_000/Configuration/hairpin_align (group)
+     Analyses/Basecall_1D_000/Configuration/post_processing (group)
+     Analyses/Basecall_1D_000/Configuration/post_processing.3000Hz (group)
+     Analyses/Basecall_1D_000/Configuration/split_hairpin (group)
+     Analyses/Basecall_1D_000/Log 
+     Analyses/Basecall_1D_000/Summary (group)
+     Analyses/Basecall_1D_000/Summary/basecall_1d_complement (group)
+     Analyses/Basecall_1D_000/Summary/basecall_1d_template (group)
+     Analyses/Basecall_2D_000 (group)
+     Analyses/Basecall_2D_000/BaseCalled_2D (group)
+     Analyses/Basecall_2D_000/BaseCalled_2D/Alignment 
+     Analyses/Basecall_2D_000/BaseCalled_2D/Fastq 
+     Analyses/Basecall_2D_000/Configuration (group)
+     Analyses/Basecall_2D_000/Configuration/aggregator (group)
+     Analyses/Basecall_2D_000/Configuration/basecall_1d (group)
+     Analyses/Basecall_2D_000/Configuration/basecall_2d (group)
+     Analyses/Basecall_2D_000/Configuration/calibration_strand (group)
+     Analyses/Basecall_2D_000/Configuration/components (group)
+     Analyses/Basecall_2D_000/Configuration/general (group)
+     Analyses/Basecall_2D_000/Configuration/hairpin_align (group)
+     Analyses/Basecall_2D_000/Configuration/post_processing (group)
+     Analyses/Basecall_2D_000/Configuration/post_processing.3000Hz (group)
+     Analyses/Basecall_2D_000/Configuration/split_hairpin (group)
+     Analyses/Basecall_2D_000/HairpinAlign (group)
+     Analyses/Basecall_2D_000/HairpinAlign/Alignment 
+     Analyses/Basecall_2D_000/Log 
+     Analyses/Basecall_2D_000/Summary (group)
+     Analyses/Basecall_2D_000/Summary/basecall_2d (group)
+     Analyses/Basecall_2D_000/Summary/hairpin_align (group)
+     Analyses/Basecall_2D_000/Summary/post_process_complement (group)
+     Analyses/Basecall_2D_000/Summary/post_process_template (group)
+     Analyses/Calibration_Strand_000 (group)
+     Analyses/Calibration_Strand_000/Configuration (group)
+     Analyses/Calibration_Strand_000/Configuration/aggregator (group)
+     Analyses/Calibration_Strand_000/Configuration/basecall_1d (group)
+     Analyses/Calibration_Strand_000/Configuration/basecall_2d (group)
+     Analyses/Calibration_Strand_000/Configuration/calibration_strand (group)
+     Analyses/Calibration_Strand_000/Configuration/components (group)
+     Analyses/Calibration_Strand_000/Configuration/general (group)
+     Analyses/Calibration_Strand_000/Configuration/hairpin_align (group)
+     Analyses/Calibration_Strand_000/Configuration/post_processing (group)
+     Analyses/Calibration_Strand_000/Configuration/post_processing.3000Hz (group)
+     Analyses/Calibration_Strand_000/Configuration/split_hairpin (group)
+     Analyses/Calibration_Strand_000/Log 
+     Analyses/Calibration_Strand_000/Summary (group)
+     Analyses/EventDetection_000 (group)
+     Analyses/EventDetection_000/Configuration (group)
+     Analyses/EventDetection_000/Configuration/abasic_detection (group)
+     Analyses/EventDetection_000/Configuration/event_detection (group)
+     Analyses/EventDetection_000/Configuration/hairpin_detection (group)
+     Analyses/EventDetection_000/Reads (group)
+     Analyses/EventDetection_000/Reads/Read_68 (group)
+     Analyses/EventDetection_000/Reads/Read_68/Events 
+     Analyses/Hairpin_Split_000 (group)
+     Analyses/Hairpin_Split_000/Configuration (group)
+     Analyses/Hairpin_Split_000/Configuration/aggregator (group)
+     Analyses/Hairpin_Split_000/Configuration/basecall_1d (group)
+     Analyses/Hairpin_Split_000/Configuration/basecall_2d (group)
+     Analyses/Hairpin_Split_000/Configuration/calibration_strand (group)
+     Analyses/Hairpin_Split_000/Configuration/components (group)
+     Analyses/Hairpin_Split_000/Configuration/general (group)
+     Analyses/Hairpin_Split_000/Configuration/hairpin_align (group)
+     Analyses/Hairpin_Split_000/Configuration/post_processing (group)
+     Analyses/Hairpin_Split_000/Configuration/post_processing.3000Hz (group)
+     Analyses/Hairpin_Split_000/Configuration/split_hairpin (group)
+     Analyses/Hairpin_Split_000/Log 
+     Analyses/Hairpin_Split_000/Summary (group)
+     Analyses/Hairpin_Split_000/Summary/split_hairpin (group)
+     Sequences (group)
+     Sequences/Meta (group)
+     UniqueGlobalKey (group)
+     UniqueGlobalKey/channel_id (group)
+     UniqueGlobalKey/context_tags (group)
+     UniqueGlobalKey/tracking_id (group)
+#+end_example
+
+**** Extracting fastq sequences
+     #+BEGIN_SRC python :results silent
+       import h5py, glob
+
+       infiles = glob.glob("/run/media/christophe/Elements/ONT Data sets/downloads 121115 AMPLICONS LIGATED/pass/*fast5")
+       #outfile = "/home/christophe/Documents/STR/Nanopore/Results/ligatedSTRs.fastq"
+       #outfile = open(outfile,'wt')
+       withoutFQcounter = 0
+
+       for f5file in infiles:
+	   f5 = h5py.File(f5file)
+	   try:
+	       fq = f5["Analyses/Basecall_2D_000/BaseCalled_2D/Fastq"]
+	       outfile.write(fq.value.decode())
+	   except KeyError:
+	       withoutFQcounter+=1 
+	   f5.close()
+	   
+       print(withoutFQcounter, "fast5 files without called fastq sequence")
+       outfile.close()
+     #+END_SRC
+
+*** Counting primers in reads :noexport:
+**** Philosophical reflections
+     Assuming nanopore accuracy of 0.85%, or sequencing error 0.15%,
+     how muck reads can we hope to extract if we search the primers,
+     allowing up to a specific amount of errors
+     - binom.cdf => cumulative probability
+     - binom.pmf => probabilty for exact number of success
+     #+BEGIN_SRC python :results output
+       from scipy.stats import binom
+       sequencingError = 0.15
+       averagePrimerLength = 20
+       #Cumulative binomial distribution
+       for allowedErrors in range(6):
+	   print("{:.2f} of reads have primers with up to {} errors.".format(
+	       binom.cdf(allowedErrors, averagePrimerLength, sequencingError)**2,
+	       allowedErrors)
+	   )
+     #+END_SRC
+
+     #+RESULTS:
+     : 0.00 of reads have primers with up to 0 errors.
+     : 0.03 of reads have primers with up to 1 errors.
+     : 0.16 of reads have primers with up to 2 errors.
+     : 0.42 of reads have primers with up to 3 errors.
+     : 0.69 of reads have primers with up to 4 errors.
+     : 0.87 of reads have primers with up to 5 errors.
+
+**** Quick and dirty counting primers
+    #+BEGIN_SRC python :results silent :session *nanofore*
+      from itertools import count
+      import matplotlib.pyplot as plt
+      import sys
+      sys.path.append("/home/christophe/repos/myflq/src/")
+      from MyFLq import complement
+
+      fastq = open("/home/christophe/Documents/STR/Nanopore/Results/ligatedSTRs.fastq")
+      c = count(0)
+      reads = [line for line in fastq if next(c)%4 == 1]
+
+      #Plot length histogram
+      plt.hist([len(r) for r in reads],bins=1000)
+      #plt.show()
+
+      allDataOneString = ' '.join(reads)
+
+      #Primers
+      primers = {}
+      for line in open("/home/christophe/repos/nanofore/primersequences"):
+	  if line.startswith('#'): continue
+	  line = line.strip().split(',')
+	  primers[line[0]] = {'for':[line[1],allDataOneString.count(line[1])],
+			      'forc':[complement(line[1]),allDataOneString.count(complement(line[1]))],
+			      'rev':[line[2],allDataOneString.count(line[2])],
+			      'revc':[complement(line[2]),allDataOneString.count(complement(line[2]))],
+	  }
+
+      for p in primers:
+	  print(p,
+		primers[p]['for'][1],
+		primers[p]['forc'][1],
+		primers[p]['rev'][1],
+		primers[p]['revc'][1])
+
+       
+    #+END_SRC
+
+*** Analyzing full reads
+**** Reflections :noexport:
+     - Currently generic peak detection and fitting of gaussian curve
+     - Future: if enough data, machine learning should be used
+       - scikit-learn
+     - Literature
+       - http://stackoverflow.com/questions/10143905/python-two-curve-gaussian-fitting-with-non-linear-least-squares
+       - http://stackoverflow.com/questions/19206332/gaussian-fit-for-python
+       - http://bioinformatics.oxfordjournals.org/content/22/17/2059.long
+       - http://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks_cwt.html
+**** Script
+    #+NAME: ligatedReadsExtraction
+    #+BEGIN_SRC python :results silent
+      from itertools import count
+      from math import floor,ceil
+      import numpy as np
+      import pandas as pd
+      import matplotlib.pyplot as plt
+      from os.path import expanduser as eu
+      import sys
+      sys.path.append(eu("~/repos/myflq/src/"))
+      from MyFLq import complement, calculateAlleleNumber, Locus
+
+      loci = Locus.makeLocusDict(('csv',eu('~/repos/nanofore/lociConfiguration.csv')))
+
+      #Functions
+      def bpTOfloat(bpLength,locusType):
+	  return int(bpLength)+(int(str(bpLength).split('.')[1]) if '.' in str(bpLength) else 0)/locusType
+      def floatTObp(floatLength,locusType):
+	  return int(floatLength)+(int(str(floatLength).split('.')[1]) if '.' in str(floatLength) else 0)*locusType
+      def calculateOriginalLength(repeats,locusType,refsize,refrepeats):
+	  fullRefRepeats,partialRefRepeat = str(float(refrepeats)).split('.')
+	  fullRepeats,partialRepeat = str(float(repeats)).split('.')
+	  return refsize+locusType*(int(fullRepeats)-int(fullRefRepeats))+(int(partialRepeat)-int(partialRefRepeat))
+      def gaus(x,a,x0,sigma):
+	  return a*np.exp(-(x-x0)**2/(2*sigma**2))
+      def gaus2(x,a_1,x0_1,sigma_1,a_2,x0_2,sigma_2):
+	  return a_1*np.exp(-(x-x0_1)**2/(2*sigma_1**2))+a_2*np.exp(-(x-x0_2)**2/(2*sigma_2**2))
+
+      #Main class
+      class LigatedRead:
+	  """
+	  Class that represents a ligated read of subreads.
+	  Methods allow to extract the subreads for further processing.
+	  The initial read can contain '&', which are divisions between
+	  already known subreads.
+	  """
+	  def __init__(self,read,loci,minSize1read=100,maxSize1read=500,maxPrimerErrors=0):
+	      self.read = read
+	      for l in loci:
+		  #Prep loci for use with MyFLq.calculateAlleleNumber
+		  loci[l]['ref_length'] = len(loci[l]['ref_sequence'])
+		  loci[l]['ref_alleleNumber'] = loci[l]['ref_number']
+	      self.loci = loci
+	      self.maxSize1read = maxSize1read
+	      self.minSize1read = minSize1read
+	      self.maxPrimerErrors = maxPrimerErrors
+	      self.averagePrimerLength = sum(len(self.loci[l]['ref_forwardP'])+
+					     len(self.loci[l]['ref_reverseP'])
+					     for l in self.loci)/(2*len(self.loci))
+	      
+	  def processPrimers(self,withPrimerErrors=0):
+	      #Find previous readfragments
+	      self.markpositions('&')
+	      #Primer errors setup
+	      if withPrimerErrors:
+		  #Calculate kmer size
+		  kmerSize = int(self.averagePrimerLength/(1+withPrimerErrors))
+		  #Kmer count in expected sequences
+		  self.reference_kmers = {}
+		  for l in self.loci:
+		      for seq in (self.loci[l]['ref_sequence'],complement(self.loci[l]['ref_sequence'])):
+			  for i in range(len(seq)+1-kmerSize):
+			      try: self.reference_kmers[seq[i:i+kmerSize]]+=1
+			      except KeyError: self.reference_kmers[seq[i:i+kmerSize]]=1
+	      #Find primers
+	      for locus in self.loci:
+		  for primertype in ('ref_forwardP','ref_reverseP','ref_forwardP_c','ref_reverseP_c'):
+		      primer = (self.loci[locus][primertype] if not primertype.endswith('_c')
+				else complement(self.loci[locus][primertype[:-2]]))
+		      if not withPrimerErrors:
+			  self.markpositions(primer,locus,primertype)
+		      else:
+			  primerKmers = {i:primer[i:i+kmerSize]
+					 for i in range(0,len(primer)+1-kmerSize,kmerSize)}
+			  if len(primer)%kmerSize != 0: primerKmers[kmerSize] = primer[-kmerSize:]
+			  for o in primerKmers:
+			      if self.reference_kmers[primerKmers[o]] == 1:
+				  self.markpositions(primerKmers[o],locus,primertype,offset=o)
+	      #Remove duplicates TODO (make set, then sorted for list)
+	      #Sort on position
+	      self.primerPositions.sort(key = lambda x: x[0])
+
+	  def markpositions(self,pattern,locus=None,primertype=None,offset=0):
+	      try:
+		  currentPosition = self.read.find(pattern)
+		  while currentPosition != -1:
+		      self.primerPositions.append((currentPosition-offset,locus,primertype))
+		      currentPosition = self.read.find(pattern,currentPosition+1)
+		  
+	      except AttributeError:
+		  self.primerPositions = []
+		  self.markpositions(pattern,locus,primertype)
+
+	  def extractReads(self,filterArtefacts=True):
+	      self.subreads = []
+	      pp = self.primerPositions
+	      for i in range(len(pp)-1):
+		  if (self.minSize1read < (pp[i+1][0]-pp[i][0]) < self.maxSize1read and
+		      pp[i][1] == pp[i+1][1] and pp[i][2] and pp[i+1][2] and
+		      pp[i][2][:6] != pp[i+1][2][:6] and
+		      (pp[i][2].endswith('_c') ^ pp[i+1][2].endswith('_c'))):
+		      self.subreads.append((pp[i],pp[i+1]))
+	      if filterArtefacts:
+		  nonArtifacts = {('ref_forwardP', 'ref_reverseP_c'),
+				  ('ref_reverseP', 'ref_forwardP_c')}
+		  self.artifacts = [s for s in self.subreads if (s[0][2],s[1][2]) not in nonArtifacts]
+		  self.subreads = [s for s in self.subreads if (s[0][2],s[1][2]) in nonArtifacts]
+
+	  def sortsubreads(self):
+	      #Sort first on length
+	      self.subreads.sort(key=lambda x: (x[1][0]-x[0][0])+len(self.loci[x[1][1]][x[1][2].replace('_c','')]))
+	      #Then on locus
+	      self.subreads.sort(key=lambda x: x[0][1])
+
+	  def exportReads(self,filename,mode='wt',type='fasta',locus=None,alleleLength=None,maxReads=None):
+	      ci = count(1)
+	      with open(filename,mode) as outfile:
+		  countBlankInSeq = 0
+		  for r in self.subreads:
+		      seq = self.read[r[0][0]:r[1][0]+len(self.loci[r[1][1]][r[1][2].replace('_c','')])]
+		      if ' ' in seq:
+			  countBlankInSeq+=1
+			  continue
+		      if 'reverse' in r[0][2]:
+			  seq = complement(seq)
+			  orientation = 'reverse'
+		      else: orientation = 'forward'
+		      outfile.write('>{} {} ({}): {} - {} ({})\n'.format(next(ci),r[0][1],len(seq),r[0][0],r[1][0],orientation))
+		      outfile.write(seq+'\n')
+		  if countBlankInSeq: print(countBlankInSeq,"reads contained blanks and were not exported")
+
+	  def histLengths(self):
+	      self.sortsubreads()
+	      self.histLengthData = {}
+	      for subr in self.subreads:
+		  locus = subr[0][1]
+		  seq = self.read[subr[0][0]:subr[1][0]+len(self.loci[locus][subr[1][2].replace('_c','')])]
+		  #if self.loci[locus]['locusType']:
+		  #    length = float(calculateAlleleNumber(seq,self.loci[locus]))
+		  #else:
+		  length = len(seq)
+		  try:
+		      self.histLengthData[locus][length]+=1
+		  except KeyError:
+		      if locus not in self.histLengthData: self.histLengthData[locus] = {}
+		      self.histLengthData[locus][length]=1
+
+	  def peakDetection(self,peak_min_width=8,peak_max_width=12,
+			    peak_max_hight_diff=0.2,
+			    includeRefProfile=False):
+	      """
+	      Work in progress
+	      First draft: peak detection on STR repeat number lenghts,
+	      but should be performed on bp length.
+
+	      Concept:
+	      - first scipy.signal.find_peaks_cwt for initial peak detection
+	      - select two most prominent peaks, if they are separated minimal distance
+		and have minimal height difference
+	      - on those 1 or 2 peaks calculate gaussian fit
+	      - use mean and calculated sigma to esitmate likely allele lengths
+	      """
+	      from scipy import signal
+	      from scipy.optimize import curve_fit
+	      import numpy as np
+	      self.profile = {}
+	      plotDimension = np.sqrt(len(self.histLengthData))
+	      fig,axes = plt.subplots(ceil(plotDimension),ceil(len(self.histLengthData)/plotDimension),sharex=True,sharey=True)
+	      for l,ax in zip(sorted(self.histLengthData),
+			      (ax for row in axes for ax in row)):
+		  locusType = self.loci[l]['locusType']
+		  x = sorted(self.histLengthData[l])
+		  x_range = list(range(0,x[-1]+1))
+		  y = [0 if i not in x else self.histLengthData[l][i] for i in x_range]
+		  peaks = signal.find_peaks_cwt(y,np.arange(peak_min_width,peak_max_width))
+		  peaks = [(x_range[p],y[p]) for p in peaks]
+		  peaks.sort(key = lambda x: x[1],reverse = True)
+		  #Potential peaks
+		  if len(peaks) > 1 and peaks[0][1]*peak_max_hight_diff < peaks[1][1]:
+		      peaks = peaks[:2]
+		  else:
+		      peaks = [peaks[0]]
+		  #Calculate gaussian fit
+		  x = np.array(x)
+		  y = np.array([self.histLengthData[l][i] for i in x])
+		  ax.plot(x,y,'b+',label=l)
+		  try:
+		      if len(peaks) == 1:
+			  popt,pcov = curve_fit(gaus,x,y,p0=[max(y),peaks[0][0],peak_min_width])
+			  self.profile[l] = ((calculateAlleleNumber(' '*int(round(popt[1])),self.loci[l]) if locusType
+					      else round(popt[1]), popt[2]/(locusType if locusType else 1)),)
+		      
+			  ax.plot(x,gaus(x,*popt),'ro:',label='fit1')
+		      elif len(peaks) == 2:
+			  popt,pcov = curve_fit(gaus2,x,y,p0=[max(y),peaks[0][0],peak_min_width,
+							      max(y),peaks[1][0],peak_min_width])
+			  self.profile[l] = ((calculateAlleleNumber(' '*int(round(popt[1])),self.loci[l]) if locusType
+					      else round(popt[1]), popt[2]/(locusType if locusType else 1)),
+					     (calculateAlleleNumber(' '*int(round(popt[4])),self.loci[l]) if locusType
+					      else round(popt[4]), popt[5]/(locusType if locusType else 1)))
+			  ax.plot(x,gaus2(x,*popt),'ro:',label='fit2')
+		      else: self.profile[l] = None
+		  except RuntimeError:
+		      self.profile[l] = None
+		  if includeRefProfile and locusType:
+		      for ra in self.referenceProfile[l]:
+			  position = calculateOriginalLength(ra, locusType,
+							     self.loci[l]['ref_length'],
+							     self.loci[l]['ref_number'])
+			  ax.plot((position,position), ax.get_ylim(),'g-')
+		  ax.legend()
+	      plt.show(block=False)
+
+	  def CPI(self,populationFile):
+	      """
+	      Calculates combined probability of inclusion, aka
+	      random match probability.
+	      populationFile should be 'csv' formatted, with each line:
+		  <locus name>,<allele size>,<allele frequence>
+	      (without angular brackets)
+	      """
+	      #Reprocess self.profile to ranges of alleles
+	      self.profileCI = {}
+	      self.CPI_value = 1
+	      self.populationData = pd.read_csv(populationFile)
+	      self.CPI_unusedLoci = set(self.profile) - set(self.populationData['#Locus name'])        
+	      
+	      for l in self.profile:
+		  if l in self.CPI_unusedLoci: continue
+		  locusAlleles = self.populationData[self.populationData[
+		      self.populationData.columns[0]]==l]
+		  locusAN = locusAlleles["Allele number"]
+		  #TODO float/allele number issue
+		  alleleRanges = [(float(g[0])-g[1],float(g[0])+g[1]) for g in self.profile[l]]
+		  if len(alleleRanges) == 2:
+		      alleleRanges.sort(key = lambda x: x[0])
+		      if alleleRanges[0][1] > alleleRanges[1][0]:
+			  mean = (alleleRanges[0][1] + alleleRanges[1][0])/2
+			  alleleRanges = [(alleleRanges[0][0],mean),(mean,alleleRanges[1][1])]
+			  #TODO check if with 'mean' is best strategy
+		  self.profileCI[l] = alleleRanges
+		  af1 = locusAlleles[(locusAN >= alleleRanges[0][0]) &
+				     (locusAN < alleleRanges[0][1])]["Allele Frequency"].sum()
+		  if len(alleleRanges) == 1:
+		      locusProbability = af1**2
+		  else:
+		      af2 = locusAlleles[(locusAN >= alleleRanges[1][0]) &
+					 (locusAN < alleleRanges[1][1])]["Allele Frequency"].sum()
+		      locusProbability = 2*af1*af2
+		  self.CPI_value*=locusProbability
+
+	  def linkReferenceProfile(self,referenceProfileFile):
+	      self.referenceProfile = {}
+	      with open(referenceProfileFile) as inprofile:
+		  for line in inprofile:
+		      if line.startswith('#'): continue
+		      line = line.strip().split(',')
+		      self.referenceProfile[line[0]] = (float(line[1]),float(line[2]))
+		      
+      #Processing reads
+      fastq = open(eu("~/repos/nanofore/Results/ligatedSTRs.fastq"))
+      c = count(0)
+      reads = [line for line in fastq if next(c)%4 == 1]
+      allreads = '&'.join(reads)
+
+      #ligread = LigatedRead('&'.join(reads),loci)
+      ligread = LigatedRead(allreads,loci,minSize1read=90)
+      ligread.linkReferenceProfile(eu('~/repos/nanofore/Profile9948A'))
+      ligread.processPrimers(withPrimerErrors=1)
+      ligread.extractReads()
+      ligread.histLengths()
+      ligread.exportReads(eu('~/repos/nanofore/Results/separatedLigatedSTRs_minlen.fasta'))
+      ligread.peakDetection(includeRefProfile=True)
+      ligread.CPI(populationFile=eu('~/repos/nanofore/europefreq.csv'))
+      print("RPM value profile:",ligread.CPI_value)
+
+      #Calculate an original length
+      calculateOriginalLength(10.3,ligread.loci['D13S317']['locusType'],
+			      ligread.loci['D13S317']['ref_length'],
+			      ligread.loci['D13S317']['ref_number'])
+    #+END_SRC
+
+*** Multiple sequence alignment :noexport:
+    - http://www.ebi.ac.uk/Tools/msa/
+      - http://www.ebi.ac.uk/Tools/msa/mafft/
+    - https://github.com/PacificBiosciences/pbdagcon
+    - Installed Biopython => pip install biopython
+      #+BEGIN_SRC python :results output
+	from Bio import AlignIO
+	from Bio.Align import AlignInfo
+	alignment = AlignIO.read(open('/home/christophe/Downloads/msatest.fasta'),"fasta")
+	summary_align = AlignInfo.SummaryInfo(alignment)
+	consensus = summary_align.gap_consensus()
+	print('Consensus length:',len(str(consensus).replace('-','')))
+	print('Ambiguous bases:',consensus.count('X'))
+      #+END_SRC
+
+      #+RESULTS:
+      : Consensus length: 191
+      : Ambiguous bases: 20
+
+**** Biopython
+     - View subalignment => alignment[:10,20:30]
+
+*** Reference sequence alignment :noexport:
+    Example
+    #+BEGIN_SRC python
+      from Bio import pairwise2
+      from Bio.Seq import Seq
+      from Bio.SeqRecord import SeqRecord
+      from Bio import AlignIO
+      from Bio.Align import AlignInfo
+      from Bio.Alphabet import IUPAC, Gapped
+
+      #Example D3 allel 15
+      reference = 
+"ACTGCAGTCCAATCTGGGTGACAGAGCAAGACCCTGTCTCATAGATAGATAGATAGATAGATAGATAGATAGATAGATAGATAGACAGACAGACAGATAGATACATGCAAGCCTCTGTTGATTTCAT"
+      consensus = 
+"XXXXXAGTCCAATCTGGGTGACAGAGCAAGACCCTGTCTCATAGATAGATAGATAGATAGATAGATAGATAGATAGATAGATAGATAGACAGACAGATAGATACATGCAAGCCTCTGTTGATTTXXX"
+
+      alignments = pairwise2.align.globalms(reference,consensus,2,-1,-1,-1)
+      #Last 4 numbers are: match score, mismatch penalty, gap penalty, gap extension
+
+      print(len(alignments))
+      #Ideally one, if many only look at the best score alignment
+
+      align =AlignIO.MultipleSeqAlignment([],Gapped(IUPAC.ambiguous_dna, "-"))
+      align.append(SeqRecord(Seq(alignments[0][0],IUPAC.ambiguous_dna),id="Reference"))
+      align.append(SeqRecord(Seq(alignments[0][1].replace('X','N'),IUPAC.ambiguous_dna),id="Consensus"))
+      summary_align = AlignInfo.SummaryInfo(align)
+      consensus = summary_align.gap_consensus()
+      print('Mismatches:',consensus.count('X'))
+      print(consensus)
+    #+END_SRC
+* Population data :noexport:
+** popSTR
+   - http://spsmart.cesga.es/search.php
+** file:~/repos/nanofore/popSTR_europe.csv
+
