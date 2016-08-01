@@ -4,9 +4,6 @@
 ** Ligated STRs
     #+END_SRC
 
-*** Updated poretools, installed under global python3 :noexport:
-  - https://github.com/arq5x/poretools
-
 *** Extracting reads from nanopore data
 **** Checking current fast5 format
      #+BEGIN_SRC python :results output
@@ -121,8 +118,8 @@
        import h5py, glob
 
        infiles = glob.glob("/run/media/christophe/Elements/ONT Data sets/downloads 121115 AMPLICONS LIGATED/pass/*fast5")
-       #outfile = "/home/christophe/Documents/STR/Nanopore/Results/ligatedSTRs.fastq"
-       #outfile = open(outfile,'wt')
+       outfile = "/home/christophe/Documents/STR/Nanopore/Results/ligatedSTRs.fastq"
+       outfile = open(outfile,'wt')
        withoutFQcounter = 0
 
        for f5file in infiles:
@@ -300,9 +297,6 @@
 			    peak_max_hight_diff=0.2,
 			    includeRefProfile=False):
 	      """
-	      Work in progress
-	      First draft: peak detection on STR repeat number lenghts,
-	      but should be performed on bp length.
 
 	      Concept:
 	      - first scipy.signal.find_peaks_cwt for initial peak detection
