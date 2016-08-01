@@ -6,7 +6,6 @@
 
 *** Updated poretools, installed under global python3 :noexport:
   - https://github.com/arq5x/poretools
-  - Not used
 
 *** Extracting reads from nanopore data
 **** Checking current fast5 format
@@ -434,5 +433,5 @@
 * Population data :noexport:
 ** popSTR
    - http://spsmart.cesga.es/search.php
-** file:~/repos/nanofore/popSTR_europe.csv
+
 
